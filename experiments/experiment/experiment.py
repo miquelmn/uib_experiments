@@ -1,12 +1,13 @@
 # -*- coding: utf-8 -*-
 
-from dades import dades
-from typing import Union
+from ..dades import dades
+from typing import Union, Tuple
 import cv2
 import os
 import numpy as np
 from collections.abc import Iterable
 import glob
+import re
 
 Num = Union[int, float]
 
@@ -37,20 +38,24 @@ class Experiment:
         self._num_exp = num_exp
         self._path = os.path.join(path, "exp_" + str(num_exp))
 
+    def init(self) -> None:
+        """ Initializes the experiment.  """
+
         Experiment._create_folder(self._path)
 
-        print("Experiment %s has started." % str(num_exp))
+        print("Experiment %s has started." % str(self._num_exp))
 
     def save_result(self, data: dades.Data):
         storage_type = data.storage_type
 
-        if storage_type == "I":
+        if storage_type == dades.ALLOW_STORAGES_TYPES[0]:
             self._save_img(data)
-        elif storage_type == "S" or storage_type == "O":
+        elif storage_type == dades.ALLOW_STORAGES_TYPES[2] or \
+                storage_type == dades.ALLOW_STORAGES_TYPES[3]:
             self._save_string(data)
-        elif storage_type == "C":
+        elif storage_type == dades.ALLOW_STORAGES_TYPES[4]:
             self._save_coordinates(data)
-        elif storage_type == "CI":
+        elif storage_type == dades.ALLOW_STORAGES_TYPES[1]:
             self._save_coordinates_image(data)
 
     def _save_coordinates_image(self, data: dades.Data) -> None:
@@ -62,13 +67,17 @@ class Experiment:
         Returns:
 
         """
+
         coordinates, image = data.data
 
         res_image = Experiment._draw_points(image, coordinates, values=1, side=2)
 
-        path = self._create_folders_for_data(data)
+        path, name = self._create_folders_for_data(data)
 
-        cv2.imwrite(path, res_image)
+        if not re.match(".*\..{3}$", name):
+            name = name + ".jpg"
+
+        cv2.imwrite(os.path.join(path, name), res_image)
 
     def _save_coordinates(self, data: dades.Data) -> None:
         """
@@ -102,9 +111,12 @@ class Experiment:
         Returns:
 
         """
-        path = self._create_folders_for_data(data)
+        path, name = self._create_folders_for_data(data)
 
-        cv2.imwrite(path, data.data)
+        if not re.match(".*\..{3}$", name):
+            name = name + ".jpg"
+
+        cv2.imwrite(os.path.join(path, name), data.data)
 
     def _save_string(self, data: dades.Data) -> None:
         """
@@ -115,12 +127,12 @@ class Experiment:
         Returns:
 
         """
-        path = self._create_folders_for_data(data)
+        path, name = self._create_folders_for_data(data)
 
         with open(path, "w") as text_file:
             text_file.write(data.data)
 
-    def _create_folders_for_data(self, data: dades.Data) -> str:
+    def _create_folders_for_data(self, data: dades.Data) -> Tuple[str, str]:
         """ Create recursively the folder tree.
 
         Args:
@@ -131,9 +143,14 @@ class Experiment:
         """
         path = os.path.join(self._path, data.path)
 
-        Experiment._create_folder(os.path.split(path)[0])
+        Experiment._create_folder(path)
 
-        return path
+        name = data.name
+        if data.name is None:
+            files = list(glob.iglob(os.path.join(path, "*")))
+            name = str(len(files))
+
+        return path, name
 
     @staticmethod
     def _create_folder(path):

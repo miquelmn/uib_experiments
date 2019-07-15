@@ -16,5 +16,5 @@ setup(name='experiments',
       author='Miquel Miró Nicolau, Dr. Gabriel Moyà Alcover',
       author_email='miquel.miro@uib.cat, gabriel_moya@uib.es',
       # license=LICENSE,
-      # package=find_packages(exclude=('texts', 'docs'))
+      package=find_packages(exclude=('texts', 'docs'))
       )
