@@ -48,14 +48,14 @@ class Experiment:
     def save_result(self, data: dades.Data):
         storage_type = data.storage_type
 
-        if storage_type == dades.ALLOW_STORAGES_TYPES[0]:
+        if storage_type == dades._STORAGES_TYPES[0]:
             self._save_img(data)
-        elif storage_type == dades.ALLOW_STORAGES_TYPES[2] or \
-                storage_type == dades.ALLOW_STORAGES_TYPES[3]:
+        elif storage_type == dades._STORAGES_TYPES[2] or \
+                storage_type == dades._STORAGES_TYPES[3]:
             self._save_string(data)
-        elif storage_type == dades.ALLOW_STORAGES_TYPES[4]:
+        elif storage_type == dades._STORAGES_TYPES[4]:
             self._save_coordinates(data)
-        elif storage_type == dades.ALLOW_STORAGES_TYPES[1]:
+        elif storage_type == dades._STORAGES_TYPES[1]:
             self._save_coordinates_image(data)
 
     def _save_coordinates_image(self, data: dades.Data) -> None:
