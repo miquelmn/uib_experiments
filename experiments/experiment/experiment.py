@@ -1,15 +1,17 @@
 # -*- coding: utf-8 -*-
 
 from ..dades import dades
-from typing import Union, Tuple
+from typing import Union, Tuple, List
 import cv2
 import os
 import numpy as np
 from collections.abc import Iterable
 import glob
 import re
+import time
 
 Num = Union[int, float]
+READ_FROM_KEYBOARD = True
 
 
 class Experiment:
@@ -24,7 +26,7 @@ class Experiment:
                        the folder for the last experiment.
     """
 
-    def __init__(self, path: str, num_exp: int = -1):
+    def __init__(self, path: str, num_exp: int = -1, explanation: str = None):
         if num_exp < 0:  # Is not set, we're going to get automatic the number
             exps = list(glob.iglob(os.path.join(path, "exp_*")))
             exps = sorted(exps,
@@ -37,26 +39,80 @@ class Experiment:
 
         self._num_exp = num_exp
         self._path = os.path.join(path, "exp_" + str(num_exp))
+        self._start_time = 0
+        self._end_time = 0
+        if READ_FROM_KEYBOARD and explanation is None:
+            explanation = input("Enter an explanation for the experiment: ")
+        self._explanation = explanation
 
     def init(self) -> None:
         """ Initializes the experiment.  """
 
         Experiment._create_folder(self._path)
+        self._start_time = time.time()
 
         print("Experiment %s has started." % str(self._num_exp))
+
+    def finish(self) -> None:
+        """
+        Raises:
+            RuntimeError when the experiment was not started
+        Returns:
+
+        """
+        if self._start_time == 0:
+            raise RuntimeError("ERROR: Trying to finish a non initialized experiment.")
+        self._end_time = time.time()
+
+        path = os.path.join(self._path, "experiment_resume.txt")
+        with open(path, "w") as text_file:
+            text_file.write(self.__get_resume())
+
+    def __get_resume(self) -> str:
+        """ Resume of the experiment.
+
+        Constructs an string with information about the experiment.
+
+        Returns:
+
+        """
+        elapsed_time = self._end_time - self._start_time
+
+        print("Experiment %s finished." % str(self._num_exp))
+
+        resum = "Experiment %s \n\tElapsed time %s" % (
+            str(self._num_exp), str(elapsed_time))
+
+        if self._explanation is not None:
+            resum = resum + "\n\tExplanation: %s" % self._explanation
+
+        return resum
 
     def save_result(self, data: dades.Data):
         storage_type = data.storage_type
 
-        if storage_type == dades._STORAGES_TYPES[0]:
+        if dades.Data.is_image(storage_type):
             self._save_img(data)
-        elif storage_type == dades._STORAGES_TYPES[2] or \
-                storage_type == dades._STORAGES_TYPES[3]:
+        elif storage_type == dades.STORAGES_TYPES[2] or \
+                storage_type == dades.STORAGES_TYPES[3]:
             self._save_string(data)
-        elif storage_type == dades._STORAGES_TYPES[4]:
+        elif storage_type == dades.STORAGES_TYPES[4]:
             self._save_coordinates(data)
-        elif storage_type == dades._STORAGES_TYPES[1]:
+        elif storage_type == dades.STORAGES_TYPES[1]:
             self._save_coordinates_image(data)
+
+    def save_results_batch(self, datas: List[dades.Data]):
+        """ Save data of the experiment.
+
+        Saves a list of multiples data.
+
+        Args:
+            datas (List of data):
+
+        Returns:
+
+        """
+        map(self.save_result, datas)
 
     def _save_coordinates_image(self, data: dades.Data) -> None:
         """
@@ -68,9 +124,9 @@ class Experiment:
 
         """
 
-        coordinates, image = data.data
+        image, coordinates = data.data
 
-        res_image = Experiment._draw_points(image, coordinates, values=1, side=2)
+        res_image = Experiment._draw_points(image, coordinates, values=image.max() // 2, side=2)
 
         path, name = self._create_folders_for_data(data)
 

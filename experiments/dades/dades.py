@@ -3,9 +3,9 @@
 import json
 import numpy as np
 
-_STORAGES_TYPES = ["color_image", "coordinates_image", "string", "object", "coordinates",
-                   "coordinates_values", "squares", "ellipses", "binary_image", "column",
-                   "coordinates_values_image"]
+STORAGES_TYPES = ["color_image", "coordinates_image", "string", "object", "coordinates",
+                  "coordinates_values", "squares", "ellipses", "binary_image", "column",
+                  "coordinates_values_image"]
 
 
 class Data:
@@ -44,7 +44,7 @@ class Data:
         """
         storage_type = None
         if isinstance(self.data, str):
-            storage_type = _STORAGES_TYPES[2]
+            storage_type = STORAGES_TYPES[2]
         elif isinstance(self.data, np.ndarray):
             storage_type = self._discover_numpy(self.data)
         elif isinstance(self.data, tuple):
@@ -52,19 +52,19 @@ class Data:
                 first, second = self.data
                 first_type = self._discover_numpy(first)
                 second_type = self._discover_numpy(second)
-                if self._is_image(first_type) and second_type == _STORAGES_TYPES[4]:
-                    storage_type = _STORAGES_TYPES[1]
+                if self.is_image(first_type) and second_type == STORAGES_TYPES[4]:
+                    storage_type = STORAGES_TYPES[1]
             elif len(self.data) == 3:
                 first, second, third = self.data
                 first_type = self._discover_numpy(first)
                 second_type = self._discover_numpy(second)
                 third_type = self._discover_numpy(third)
 
-                if self._is_image(first_type) and second_type == _STORAGES_TYPES[4
-                ] and third_type == _STORAGES_TYPES[9]:
-                    storage_type = _STORAGES_TYPES[10]
+                if self.is_image(first_type) and second_type == STORAGES_TYPES[4
+                ] and third_type == STORAGES_TYPES[9]:
+                    storage_type = STORAGES_TYPES[10]
         elif isinstance(self.data, object):
-            storage_type = _STORAGES_TYPES[3]
+            storage_type = STORAGES_TYPES[3]
 
         if storage_type is None:
             raise ValueError("Unknown data type.")
@@ -72,8 +72,8 @@ class Data:
         return storage_type
 
     @staticmethod
-    def _is_image(tipus: str) -> bool:
-        return (tipus == _STORAGES_TYPES[0]) or (tipus == _STORAGES_TYPES[8])
+    def is_image(tipus: str) -> bool:
+        return (tipus == STORAGES_TYPES[0]) or (tipus == STORAGES_TYPES[8])
 
     @staticmethod
     def _discover_numpy(data: np.ndarray) -> str:
@@ -99,22 +99,22 @@ class Data:
 
         if len(data.shape) == 2:
             if data.shape[1] == 2:
-                storage_type = _STORAGES_TYPES[4]
+                storage_type = STORAGES_TYPES[4]
             elif data.shape[1] == 3:
-                storage_type = _STORAGES_TYPES[5]
+                storage_type = STORAGES_TYPES[5]
             elif data.shape[1] == 4:
-                storage_type = _STORAGES_TYPES[6]
+                storage_type = STORAGES_TYPES[6]
             elif data.shape[1] == 5:
-                storage_type = _STORAGES_TYPES[7]
+                storage_type = STORAGES_TYPES[7]
             else:
-                storage_type = _STORAGES_TYPES[8]
+                storage_type = STORAGES_TYPES[8]
         elif len(data.shape) == 3:
-            storage_type = _STORAGES_TYPES[0]
+            storage_type = STORAGES_TYPES[0]
         elif len(data.shape) == 1:
-            storage_type = _STORAGES_TYPES[9]
+            storage_type = STORAGES_TYPES[9]
 
         if storage_type is None:
-            raise ValueError("Uknown numpy format.")
+            raise ValueError("Unknown numpy format.")
 
         return storage_type
 
