@@ -9,8 +9,10 @@ from collections.abc import Iterable
 import glob
 import re
 import time
+from matplotlib import pyplot as plt
 
 Num = Union[int, float]
+DataExperiment = Union[dades.Data, List[dades.Data]]
 READ_FROM_KEYBOARD = True
 
 
@@ -88,20 +90,45 @@ class Experiment:
 
         return resum
 
-    def save_result(self, data: dades.Data):
-        storage_type = data.storage_type
+    def save_result(self, dada: DataExperiment):
+        """
+        
+        Args:
+            dada: 
+
+        Returns:
+
+        """
+
+        if isinstance(dada, List):
+            self.__save_results_batch(dada)
+        else:
+            self.__save_result_single(dada)
+
+    def __save_result_single(self, dada: dades.Data):
+        """
+        
+        Args:
+            dada: 
+
+        Returns:
+
+        """
+        storage_type = dada.storage_type
 
         if dades.Data.is_image(storage_type):
-            self._save_img(data)
+            self._save_data_img(dada)
         elif storage_type == dades.STORAGES_TYPES[2] or \
                 storage_type == dades.STORAGES_TYPES[3]:
-            self._save_string(data)
+            self._save_string(dada)
         elif storage_type == dades.STORAGES_TYPES[4]:
-            self._save_coordinates(data)
+            self._save_coordinates(dada)
         elif storage_type == dades.STORAGES_TYPES[1]:
-            self._save_coordinates_image(data)
+            self._save_coordinates_image(dada)
+        elif storage_type == dades.STORAGES_TYPES[10]:
+            self._save_coordinates_values_images(dada)
 
-    def save_results_batch(self, datas: List[dades.Data]):
+    def __save_results_batch(self, datas: List[dades.Data]):
         """ Save data of the experiment.
 
         Saves a list of multiples data.
@@ -112,7 +139,39 @@ class Experiment:
         Returns:
 
         """
-        map(self.save_result, datas)
+        [self.save_result(dat) for dat in datas]
+
+    def _save_coordinates_values_images(self, datas: dades.Data) -> None:
+        """ Save image with value for coordinates.
+
+        Expects three types of data. The first of all the image. An image is a numpy matrix. The
+        second one the coordinates. Should be a array with two columns one for every dimension.
+        The third one a value for every one of the coordinates.
+
+        Save an image with the values drawed over the original image in the points indicated by the
+        coordinates.
+
+        Args:
+            datas:
+
+        Returns:
+            None
+
+        Raises:
+            Value error if the values and the coordinates are not of the same length.
+        """
+        image, coordinates, values = datas.data
+        image = np.copy(image)
+
+        if len(coordinates) != len(values):
+            raise ValueError("Coordinates and values should have the same length.")
+
+        image[image > values.max()] = values.max() + 5
+
+        curv_img = Experiment._draw_points(image, coordinates, values, 0).astype(np.uint8) * 255
+        curv_img = Experiment.__apply_custom_colormap(curv_img)
+
+        self.__save_img(datas, curv_img)
 
     def _save_coordinates_image(self, data: dades.Data) -> None:
         """
@@ -128,12 +187,7 @@ class Experiment:
 
         res_image = Experiment._draw_points(image, coordinates, values=image.max() // 2, side=2)
 
-        path, name = self._create_folders_for_data(data)
-
-        if not re.match(".*\..{3}$", name):
-            name = name + ".jpg"
-
-        cv2.imwrite(os.path.join(path, name), res_image)
+        self.__save_img(data, res_image)
 
     def _save_coordinates(self, data: dades.Data) -> None:
         """
@@ -155,7 +209,7 @@ class Experiment:
 
         np.savetxt(path, dat, delimiter=",")
 
-    def _save_img(self, data: dades.Data) -> None:
+    def _save_data_img(self, data: dades.Data) -> None:
         """ Save the image.
 
         The image is saved on the path result of the combination of the global path of the class
@@ -167,12 +221,15 @@ class Experiment:
         Returns:
 
         """
+        self.__save_img(data, data.data)
+
+    def __save_img(self, data: dades.Data, image: np.ndarray):
         path, name = self._create_folders_for_data(data)
 
         if not re.match(".*\..{3}$", name):
-            name = name + ".jpg"
+            name = name + ".png"
 
-        cv2.imwrite(os.path.join(path, name), data.data)
+        cv2.imwrite(os.path.join(path, name), image)
 
     def _save_string(self, data: dades.Data) -> None:
         """
@@ -254,3 +311,31 @@ class Experiment:
             i = i + 1
 
         return mask
+
+    @staticmethod
+    def __apply_custom_colormap(image_gray, cmap=plt.get_cmap('viridis')):
+        """ Applies a CMAP from matplotlib to a gray-scale image.
+
+        Args:
+            image_gray:
+            cmap:
+
+        Returns:
+
+        """
+        assert image_gray.dtype == np.uint8, 'must be np.uint8 image'
+        if image_gray.ndim == 3: image_gray = image_gray.squeeze(-1)
+
+        # Initialize the matplotlib color map
+        sm = plt.cm.ScalarMappable(cmap=cmap)
+
+        # Obtain linear color range
+        color_range = sm.to_rgba(np.linspace(0, 1, 256))[:, 0:3]  # color range RGBA => RGB
+        color_range = (color_range * 255.0).astype(np.uint8)  # [0,1] => [0,255]
+        color_range = np.squeeze(
+            np.dstack([color_range[:, 2], color_range[:, 1], color_range[:, 0]]),
+            0)  # RGB => BGR
+
+        # Apply colormap for each channel individually
+        channels = [cv2.LUT(image_gray, color_range[:, i]) for i in range(3)]
+        return np.dstack(channels)

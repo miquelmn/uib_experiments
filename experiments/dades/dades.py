@@ -125,10 +125,6 @@ class Data:
         Returns:
 
         """
-        # if self._storage_type == "O":
-        #     data = json.dumps(self._data.__dict__)
-        # else:
-        #     data = self._data
 
         return self._data
 
@@ -159,11 +155,3 @@ class Data:
         """
 
         return self._name
-
-#
-# class MultipleData():
-#
-#     def __init__(self, data: List[Tuple[object, str]], path: str):
-#         self.__data = []
-#         for i, (info, type) in enumerate(data):
-#             path =
