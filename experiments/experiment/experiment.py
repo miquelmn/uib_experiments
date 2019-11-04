@@ -1,19 +1,20 @@
 # -*- coding: utf-8 -*-
 
-from ..dades import dades
 from typing import Union, Tuple, List
-import cv2
 import os
-import numpy as np
-from collections.abc import Iterable
 import glob
 import re
 import time
+import cv2
+import numpy as np
+from collections.abc import Iterable
 from matplotlib import pyplot as plt
+from ..dades import dades
 
 Num = Union[int, float]
 DataExperiment = Union[dades.Data, List[dades.Data]]
 READ_FROM_KEYBOARD = True
+DONT_WRITE_TK = "REM"
 
 
 class Experiment:
@@ -46,11 +47,16 @@ class Experiment:
         if READ_FROM_KEYBOARD and explanation is None:
             explanation = input("Enter an explanation for the experiment: ")
         self._explanation = explanation
+        self._extra_text = None
 
+    def get_num_exp(self) -> int:
+        return self._num_exp
+    
     def init(self) -> None:
         """ Initializes the experiment.  """
 
-        Experiment._create_folder(self._path)
+        if self._explanation != DONT_WRITE_TK:
+            Experiment._create_folder(self._path)
         self._start_time = time.time()
 
         print("Experiment %s has started." % str(self._num_exp))
@@ -67,8 +73,9 @@ class Experiment:
         self._end_time = time.time()
 
         path = os.path.join(self._path, "experiment_resume.txt")
-        with open(path, "w") as text_file:
-            text_file.write(self.__get_resume())
+        if self._explanation != DONT_WRITE_TK:
+            with open(path, "w") as text_file:
+                text_file.write(self.__get_resume())
 
     def __get_resume(self) -> str:
         """ Resume of the experiment.
@@ -88,6 +95,9 @@ class Experiment:
         if self._explanation is not None:
             resum = resum + "\n\tExplanation: %s" % self._explanation
 
+        if self._extra_text is not None:
+            resum = resum + "\n\t %s" % self._extra_text
+
         return resum
 
     def save_result(self, dada: DataExperiment):
@@ -99,11 +109,11 @@ class Experiment:
         Returns:
 
         """
-
-        if isinstance(dada, List):
-            self.__save_results_batch(dada)
-        else:
-            self.__save_result_single(dada)
+        if self._explanation != DONT_WRITE_TK:
+            if isinstance(dada, List):
+                self.__save_results_batch(dada)
+            else:
+                self.__save_result_single(dada)
 
     def __save_result_single(self, dada: dades.Data):
         """
@@ -173,6 +183,21 @@ class Experiment:
 
         self.__save_img(datas, curv_img)
 
+    def add_text(self, text: str) -> None:
+        """
+        Add a text into the resume file.
+
+
+        Args:
+            text: String with the text to add
+
+        """
+
+        if self._extra_text is None:
+            self._extra_text = text
+        else:
+            self._extra_text = self._extra_text + "\n" + text
+
     def _save_coordinates_image(self, data: dades.Data) -> None:
         """
 
@@ -240,7 +265,7 @@ class Experiment:
         Returns:
 
         """
-        path, name = self._create_folders_for_data(data)
+        path, _ = self._create_folders_for_data(data)
 
         with open(path, "w") as text_file:
             text_file.write(data.data)

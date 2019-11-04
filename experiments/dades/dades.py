@@ -1,6 +1,35 @@
 # -*- coding: utf-8 -*-
+"""Auxiliar function for concave points calculation.
 
-import json
+This module demonstrates documentation as specified by the `Google Python
+Style Guide`_. Docstrings may extend over multiple lines. Sections are created
+with a section header and a colon followed by a block of indented text.
+
+Example:
+    Examples can be given using either the ``Example`` or ``Examples``
+    sections. Sections support any reStructuredText formatting, including
+    literal blocks::
+
+        $ python example_google.py
+
+Section breaks are created by resuming unindented text. Section breaks
+are also implicitly created anytime a new section starts.
+
+Attributes:
+    module_level_variable1 (int): Module level variables may be documented in
+        either the ``Attributes`` section of the module docstring, or in an
+        inline docstring immediately following the variable.
+
+        Either form is acceptable, but the two should not be mixed. Choose
+        one convention to document module level variables and be consistent
+        with it.
+
+
+.. _Google Python Style Guide:
+   http://google.github.io/styleguide/pyguide.html
+
+"""
+
 import numpy as np
 
 STORAGES_TYPES = ["color_image", "coordinates_image", "string", "object", "coordinates",
@@ -60,8 +89,8 @@ class Data:
                 second_type = self._discover_numpy(second)
                 third_type = self._discover_numpy(third)
 
-                if self.is_image(first_type) and second_type == STORAGES_TYPES[4
-                ] and third_type == STORAGES_TYPES[9]:
+                if self.is_image(first_type) and second_type == STORAGES_TYPES[4] \
+                        and third_type == STORAGES_TYPES[9]:
                     storage_type = STORAGES_TYPES[10]
         elif isinstance(self.data, object):
             storage_type = STORAGES_TYPES[3]
@@ -73,7 +102,7 @@ class Data:
 
     @staticmethod
     def is_image(tipus: str) -> bool:
-        return (tipus == STORAGES_TYPES[0]) or (tipus == STORAGES_TYPES[8])
+        return tipus in (STORAGES_TYPES[0], STORAGES_TYPES[8])
 
     @staticmethod
     def _discover_numpy(data: np.ndarray) -> str:
