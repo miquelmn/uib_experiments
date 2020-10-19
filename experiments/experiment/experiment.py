@@ -3,12 +3,17 @@
 from typing import Union, Tuple, List
 import os
 import glob
+import pickle
 import re
 import time
+import datetime
+
+from collections.abc import Iterable
+
 import cv2
 import numpy as np
-from collections.abc import Iterable
 from matplotlib import pyplot as plt
+
 from ..dades import dades
 
 Num = Union[int, float]
@@ -51,7 +56,7 @@ class Experiment:
 
     def get_num_exp(self) -> int:
         return self._num_exp
-    
+
     def init(self) -> None:
         """ Initializes the experiment.  """
 
@@ -89,14 +94,17 @@ class Experiment:
 
         print("Experiment %s finished." % str(self._num_exp))
 
-        resum = "Experiment %s \n\tElapsed time %s" % (
+        now = datetime.now()
+
+        resum = "Date: " + now.strftime("%d/%m/%Y %H:%M:%S") + "\n"
+        resum += "Experiment %s \n\tElapsed time %s" % (
             str(self._num_exp), str(elapsed_time))
 
         if self._explanation is not None:
             resum = resum + "\n\tExplanation: %s" % self._explanation
 
         if self._extra_text is not None:
-            resum = resum + "\n\t %s" % self._extra_text
+            resum = resum + "\n %s" % self._extra_text
 
         return resum
 
@@ -128,15 +136,29 @@ class Experiment:
 
         if dades.Data.is_image(storage_type):
             self._save_data_img(dada)
-        elif storage_type == dades.STORAGES_TYPES[2] or \
-                storage_type == dades.STORAGES_TYPES[3]:
+        elif storage_type == dades.STORAGES_TYPES[2]:
             self._save_string(dada)
+        elif storage_type == dades.STORAGES_TYPES[3]:
+            self.__save_object(dada)
         elif storage_type == dades.STORAGES_TYPES[4]:
             self._save_coordinates(dada)
         elif storage_type == dades.STORAGES_TYPES[1]:
             self._save_coordinates_image(dada)
         elif storage_type == dades.STORAGES_TYPES[10]:
             self._save_coordinates_values_images(dada)
+
+    def __save_object(self, data: dades.Data):
+        """ Pickle object
+
+        Returns:
+
+        """
+        path, name = self._create_folders_for_data(data)
+
+        with open(path + "/" + name + '.pickle', 'wb') as handle:
+            pickle.dump(data.data, handle, protocol=pickle.HIGHEST_PROTOCOL)
+
+        return None
 
     def __save_results_batch(self, datas: List[dades.Data]):
         """ Save data of the experiment.
@@ -284,7 +306,7 @@ class Experiment:
         Experiment._create_folder(path)
 
         name = data.name
-        if data.name is None:
+        if name is None:
             files = list(glob.iglob(os.path.join(path, "*")))
             name = str(len(files))
 
