@@ -94,7 +94,7 @@ class Experiment:
 
         print("Experiment %s finished." % str(self._num_exp))
 
-        now = datetime.now()
+        now = datetime.datetime.now()
 
         resum = "Date: " + now.strftime("%d/%m/%Y %H:%M:%S") + "\n"
         resum += "Experiment %s \n\tElapsed time %s" % (
@@ -140,7 +140,7 @@ class Experiment:
             self._save_string(dada)
         elif storage_type == dades.STORAGES_TYPES[3]:
             self.__save_object(dada)
-        elif storage_type == dades.STORAGES_TYPES[4]:
+        elif storage_type in (dades.STORAGES_TYPES[4], dades.STORAGES_TYPES[7]):
             self._save_coordinates(dada)
         elif storage_type == dades.STORAGES_TYPES[1]:
             self._save_coordinates_image(dada)
@@ -252,9 +252,9 @@ class Experiment:
         if not isinstance(dat, np.ndarray):
             raise ValueError("Not a valid data for the coordinates.")
 
-        path = self._create_folders_for_data(data)
+        path, name = self._create_folders_for_data(data)
 
-        np.savetxt(path, dat, delimiter=",")
+        np.savetxt(os.path.join(path, name + ".csv"), dat, delimiter=",")
 
     def _save_data_img(self, data: dades.Data) -> None:
         """ Save the image.
