@@ -43,23 +43,24 @@ class Data:
 
     """
 
-    def __init__(self, data, path: str, name: str = None):
+    def __init__(self, data, path: str, name: str = None, tipus=None):
         """
 
         Args:
             data :
             path (str):
-            name (str)
+            name (str):
+            tipus (str):
         Raises:
             ValueError if the storage type is not known.
         """
 
         self._data = data
 
-        # if storage_type not in ALLOW_STORAGES_TYPES:
-        # raise ValueError("Not a valid data type")
+        if tipus is None:
+            tipus = self._discover_type()
 
-        self._storage_type = self._discover_type()
+        self._storage_type = tipus
         self._path = path
         self._name = name
 
