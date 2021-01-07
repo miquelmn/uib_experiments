@@ -16,7 +16,8 @@ def experiment(out_path="./out", explanation: str = exps.experiment.DONT_WRITE_T
         """
 
         def wrapper(*args, **kwargs):
-            exp = exps.experiment.Experiment(out_path, explanation=explanation)
+            exp = exps.experiment.Experiment(out_path, explanation=explanation,
+                                             arguments=(args, kwargs))
             exp.init()
 
             kwargs["exp"] = exp
@@ -26,7 +27,8 @@ def experiment(out_path="./out", explanation: str = exps.experiment.DONT_WRITE_T
             freq = 440  # Hz
             os.system('play -nq -t alsa synth {} sine {}'.format(duration, freq))
             if explanation != exps.experiment.DONT_WRITE_TK:
-                subprocess.Popen(['notify-send', "Experiment finished"])
+                subprocess.Popen(
+                    ['notify-send', "Experiment " + str(exp.get_num_exp()) + "finished"])
             exp.finish()
 
             return res

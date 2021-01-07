@@ -34,7 +34,7 @@ class Experiment:
                        the folder for the last experiment.
     """
 
-    def __init__(self, path: str, num_exp: int = -1, explanation: str = None):
+    def __init__(self, path: str, num_exp: int = -1, explanation: str = None, arguments=None):
         if num_exp < 0:  # Is not set, we're going to get automatic the number
             exps = list(glob.iglob(os.path.join(path, "exp_*")))
             exps = sorted(exps,
@@ -49,10 +49,13 @@ class Experiment:
         self._path = os.path.join(path, "exp_" + str(num_exp))
         self._start_time = 0
         self._end_time = 0
+
         if READ_FROM_KEYBOARD and explanation is None:
             explanation = input("Enter an explanation for the experiment: ")
+
         self._explanation = explanation
         self._extra_text = None
+        self._arguments = arguments
 
     def get_num_exp(self) -> int:
         return self._num_exp
@@ -82,6 +85,17 @@ class Experiment:
             with open(path, "w") as text_file:
                 text_file.write(self.__get_resume())
 
+    def set_explanation(self, explanation: str):
+        """ Sets the explanation of the algorithm
+
+        Args:
+            explanation:
+
+        Returns:
+
+        """
+        self._explanation = explanation
+
     def __get_resume(self) -> str:
         """ Resume of the experiment.
 
@@ -90,21 +104,26 @@ class Experiment:
         Returns:
 
         """
-        elapsed_time = self._end_time - self._start_time
 
         print("Experiment %s finished." % str(self._num_exp))
 
-        now = datetime.datetime.now()
-
-        resum = "Date: " + now.strftime("%d/%m/%Y %H:%M:%S") + "\n"
-        resum += "Experiment %s \n\tElapsed time %s" % (
-            str(self._num_exp), str(elapsed_time))
+        resum = "%s \tExperiment %s started" % (
+            datetime.datetime.fromtimestamp(self._start_time).strftime("%d/%m/%Y %H:%M:%S"),
+            str(self._num_exp))
 
         if self._explanation is not None:
-            resum = resum + "\n\tExplanation: %s" % self._explanation
+            resum += "\n\t\t\t%s" % self._explanation
+
+        if self._arguments is not None:
+            resum += "\n\t\t\targs: " + str(self._arguments)
 
         if self._extra_text is not None:
-            resum = resum + "\n %s" % self._extra_text
+            resum = resum + "\n\t\t\t %s" % self._extra_text
+
+        resum += "\n\t\t\tElapsed time %s minutes" % (str(self._end_time - self._start_time))
+        resum += "\n%s \tExperiment %s finished" % (
+            datetime.datetime.fromtimestamp(self._end_time).strftime("%d/%m/%Y %H:%M:%S"),
+            str(self._num_exp))
 
         return resum
 
