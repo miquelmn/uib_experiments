@@ -32,7 +32,7 @@ def experiment(out_path="./out", explanation: str = exps.experiment.DONT_WRITE_T
             os.system('play -nq -t alsa synth {} sine {}'.format(duration, freq))
             if explanation != exps.experiment.DONT_WRITE_TK:
                 subprocess.Popen(
-                    ['notify-send', "Experiment " + str(exp.get_num_exp()) + "finished"])
+                    ['notify-send', f"Experiment {exp.get_num_exp()} finished \n{exp.explanation}"])
             exp.finish()
 
             return res
@@ -45,7 +45,7 @@ def experiment(out_path="./out", explanation: str = exps.experiment.DONT_WRITE_T
 FORMATTER = logging.Formatter("%(asctime)s — %(name)s — %(levelname)s — %(message)s")
 
 
-def get_logger(logger_name="log", logger_level=logging.INFO, console=False, path="logging.log"):
+def get_logger(logger_name="Experiment", logger_level=logging.INFO, path="logging.log"):
     def get_console_handler():
         console_handler = logging.StreamHandler(sys.stdout)
         console_handler.setFormatter(FORMATTER)
@@ -57,8 +57,7 @@ def get_logger(logger_name="log", logger_level=logging.INFO, console=False, path
         return file_handler
 
     logger = logging.getLogger(logger_name)
-    if console:
-        logger.addHandler(get_console_handler())
+    logger.addHandler(get_console_handler())
 
     logger.addHandler(get_file_handler())
     logger.setLevel(logger_level)  # better to have too much log than not enough

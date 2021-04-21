@@ -62,6 +62,10 @@ class Experiment:
     def path(self):
         return self._path
 
+    @property
+    def explanation(self):
+        return self._explanation
+
     def get_num_exp(self) -> int:
         return self._num_exp
 
