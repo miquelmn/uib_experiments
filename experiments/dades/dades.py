@@ -54,7 +54,8 @@ class Data:
         Raises:
             ValueError if the storage type is not known.
         """
-
+        if isinstance(data, tuple) and len(data[1]) == 0:
+            data = data[0]
         self._data = data
 
         if tipus is None:

@@ -34,7 +34,7 @@ class Experiment:
                        the folder for the last experiment.
     """
 
-    def __init__(self, path: str, num_exp: int = -1, explanation: str = None, arguments=None):
+    def __init__(self, path: str, logger, num_exp: int = -1, explanation: str = None, arguments=None):
         if num_exp < 0:  # Is not set, we're going to get automatic the number
             exps = list(glob.iglob(os.path.join(path, "exp_*")))
             exps = sorted(exps,
@@ -45,6 +45,7 @@ class Experiment:
             else:
                 num_exp = 1
 
+        self._logger = logger
         self._num_exp = num_exp
         self._path = os.path.join(path, "exp_" + str(num_exp))
         self._start_time = 0
@@ -57,6 +58,10 @@ class Experiment:
         self._extra_text = None
         self._arguments = arguments
 
+    @property
+    def path(self):
+        return self._path
+
     def get_num_exp(self) -> int:
         return self._num_exp
 
@@ -67,7 +72,7 @@ class Experiment:
             Experiment._create_folder(self._path)
         self._start_time = time.time()
 
-        print("Experiment %s has started." % str(self._num_exp))
+        self._logger.info(f"Experiment {self._num_exp} has started.")
 
     def finish(self) -> None:
         """
@@ -104,8 +109,7 @@ class Experiment:
         Returns:
 
         """
-
-        print("Experiment %s finished." % str(self._num_exp))
+        self._logger.info(f"Experiment {self._num_exp} has finished.")
 
         resum = "%s \tExperiment %s started" % (
             datetime.datetime.fromtimestamp(self._start_time).strftime("%d/%m/%Y %H:%M:%S"),

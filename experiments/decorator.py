@@ -1,5 +1,8 @@
 import os
 import subprocess
+import logging
+from logging.handlers import TimedRotatingFileHandler
+import sys
 
 from . import experiment as exps
 
@@ -16,7 +19,8 @@ def experiment(out_path="./out", explanation: str = exps.experiment.DONT_WRITE_T
         """
 
         def wrapper(*args, **kwargs):
-            exp = exps.experiment.Experiment(out_path, explanation=explanation,
+            logger = get_logger(path=os.path.join(out_path, "logging.log"))
+            exp = exps.experiment.Experiment(out_path, logger=logger, explanation=explanation,
                                              arguments=(args, kwargs))
             exp.init()
 
@@ -36,3 +40,29 @@ def experiment(out_path="./out", explanation: str = exps.experiment.DONT_WRITE_T
         return wrapper
 
     return decorator
+
+
+FORMATTER = logging.Formatter("%(asctime)s — %(name)s — %(levelname)s — %(message)s")
+
+
+def get_logger(logger_name="log", logger_level=logging.INFO, console=False, path="logging.log"):
+    def get_console_handler():
+        console_handler = logging.StreamHandler(sys.stdout)
+        console_handler.setFormatter(FORMATTER)
+        return console_handler
+
+    def get_file_handler():
+        file_handler = TimedRotatingFileHandler(path, when='midnight')
+        file_handler.setFormatter(FORMATTER)
+        return file_handler
+
+    logger = logging.getLogger(logger_name)
+    if console:
+        logger.addHandler(get_console_handler())
+
+    logger.addHandler(get_file_handler())
+    logger.setLevel(logger_level)  # better to have too much log than not enough
+
+    # with this pattern, it's rarely necessary to propagate the error up to parent
+    logger.propagate = False
+    return logger
