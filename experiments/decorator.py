@@ -19,7 +19,7 @@ def experiment(out_path="./out", explanation: str = exps.experiment.DONT_WRITE_T
         """
 
         def wrapper(*args, **kwargs):
-            logger = get_logger(path=os.path.join(out_path, "logging.log"))
+            logger = __get_logger(path=os.path.join(out_path, "logging.log"))
             exp = exps.experiment.Experiment(out_path, logger=logger, explanation=explanation,
                                              arguments=(args, kwargs))
             exp.init()
@@ -42,18 +42,30 @@ def experiment(out_path="./out", explanation: str = exps.experiment.DONT_WRITE_T
     return decorator
 
 
-FORMATTER = logging.Formatter("%(asctime)s — %(name)s — %(levelname)s — %(message)s")
+__FORMATTER = logging.Formatter("%(asctime)s — %(name)s — %(levelname)s — %(message)s")
 
 
-def get_logger(logger_name="Experiment", logger_level=logging.INFO, path="logging.log"):
+def __get_logger(logger_name="Experiment", logger_level=logging.INFO, path="logging.log"):
+    """ Function to build the logger.
+
+    This function generates a logger with the indication passed as parameter.
+
+    Args:
+        logger_name:
+        logger_level:
+        path:
+
+    Returns:
+
+    """
     def get_console_handler():
         console_handler = logging.StreamHandler(sys.stdout)
-        console_handler.setFormatter(FORMATTER)
+        console_handler.setFormatter(__FORMATTER)
         return console_handler
 
     def get_file_handler():
         file_handler = TimedRotatingFileHandler(path, when='midnight')
-        file_handler.setFormatter(FORMATTER)
+        file_handler.setFormatter(__FORMATTER)
         return file_handler
 
     logger = logging.getLogger(logger_name)
