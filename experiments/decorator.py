@@ -43,37 +43,43 @@ def experiment(out_path="./out", explanation: str = exps.experiment.DONT_WRITE_T
 
 
 __FORMATTER = logging.Formatter("%(asctime)s — %(name)s — %(levelname)s — %(message)s")
+__LOGGER = None
 
 
-def __get_logger(logger_name="Experiment", logger_level=logging.INFO, path="logging.log"):
-    """ Function to build the logger.
+def __get_logger(logger_name="Experiment", logger_level=logging.INFO, path="logging.log",
+                 rebuild=False):
+    global __LOGGER
 
-    This function generates a logger with the indication passed as parameter.
+    def __build_logger():
+        """ Function to build the logger.
 
-    Args:
-        logger_name:
-        logger_level:
-        path:
+        This function generates a logger with the indication passed as parameter.
 
-    Returns:
+        Returns:
 
-    """
-    def get_console_handler():
-        console_handler = logging.StreamHandler(sys.stdout)
-        console_handler.setFormatter(__FORMATTER)
-        return console_handler
+        """
 
-    def get_file_handler():
-        file_handler = TimedRotatingFileHandler(path, when='midnight')
-        file_handler.setFormatter(__FORMATTER)
-        return file_handler
+        def get_console_handler():
+            console_handler = logging.StreamHandler(sys.stdout)
+            console_handler.setFormatter(__FORMATTER)
+            return console_handler
 
-    logger = logging.getLogger(logger_name)
-    logger.addHandler(get_console_handler())
+        def get_file_handler():
+            file_handler = TimedRotatingFileHandler(path, when='midnight')
+            file_handler.setFormatter(__FORMATTER)
+            return file_handler
 
-    logger.addHandler(get_file_handler())
-    logger.setLevel(logger_level)  # better to have too much log than not enough
+        logger = logging.getLogger(logger_name)
+        logger.addHandler(get_console_handler())
 
-    # with this pattern, it's rarely necessary to propagate the error up to parent
-    logger.propagate = False
-    return logger
+        logger.addHandler(get_file_handler())
+        logger.setLevel(logger_level)  # better to have too much log than not enough
+
+        # with this pattern, it's rarely necessary to propagate the error up to parent
+        logger.propagate = False
+        return logger
+
+    if __LOGGER is None or rebuild:
+        __LOGGER = __build_logger()
+
+    return __LOGGER
