@@ -8,7 +8,7 @@ def configuration(parent_package='', top_path=None):
 
     config = Configuration('experiments', parent_package, top_path)
 
-    config.add_subpackage('dades')
+    config.add_subpackage('data')
 
     # Add test directories
     rel_isdir = lambda d: isdir(join(curpath, d))

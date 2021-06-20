@@ -1,5 +1,9 @@
 # -*- coding: utf-8 -*-
+""" Experiment module.
 
+This module contains a set of function and classes to handles experiments. The aim of these methods
+is to be able to save results easily with an standard format.
+"""
 from typing import Union, Tuple, List
 import os
 import glob
