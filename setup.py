@@ -8,7 +8,7 @@ with open('LICENSE') as f:
     LICENSE = f.read()
 
 setup(name='experiments',
-      version='0.9.5',
+      version='0.9.6',
       description='Handle the experiments.',
       # long_description=README,
       # long_description_content_type="text/markdown",

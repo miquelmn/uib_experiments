@@ -14,7 +14,7 @@ import cv2
 import numpy as np
 from matplotlib import pyplot as plt
 
-from ..dades import dades
+from ..data import dades
 
 Num = Union[int, float]
 DataExperiment = Union[dades.Data, List[dades.Data]]
