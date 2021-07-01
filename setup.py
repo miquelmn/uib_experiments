@@ -1,20 +1,16 @@
 # -*- coding: utf-8 -*-
 from setuptools import setup, find_packages
-from os import path
 
-this_directory = path.abspath(path.dirname(__file__))
+LONG_DESCRIPTION = "Package to handle scientific experiments easily"
 
-with open('LICENSE') as f:
-    LICENSE = f.read()
-
-setup(name='ugivia_experiments',
-      version='0.9.7.2',
+setup(name='uib_experiments',
+      version='0.9.2',
       description='Handle the experiments.',
-      url='https://gitlab.com/miquelca32/experiments',
+      long_description=LONG_DESCRIPTION,
+      url='https://github.com/miquelmn/uib_experiments',
       author='Miquel Miró Nicolau, Dr. Gabriel Moyà Alcover',
       author_email='miquel.miro@uib.cat, gabriel_moya@uib.es',
-      license=LICENSE,
-      package=find_packages(exclude=('texts', 'docs')),
+      package=['uib_experiments'],
       install_requires=[
           'telegram_send',
           'opencv-python',
