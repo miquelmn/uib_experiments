@@ -2,4 +2,4 @@
 
 """
 
-from . import experiment
+from .experiment import Experiment

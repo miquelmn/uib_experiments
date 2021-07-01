@@ -15,9 +15,17 @@ class TelegramCallback(keras.callbacks.Callback):
 
     def __init__(self, show_plot=False, *args, **kwargs):
         self.__show_plot = show_plot
-        super.__init__(*args, **kwargs)
+        super().__init__(*args, **kwargs)
 
     def on_train_begin(self, logs=None):
+        """ Executes on the beginning of the train.
+
+        Args:
+            logs:
+
+        Returns:
+
+        """
         start_date = datetime.today().strftime('%d/%m/%Y %H:%M:%S')
 
         messages = [f"Train started at {start_date}"]
@@ -26,7 +34,7 @@ class TelegramCallback(keras.callbacks.Callback):
 
     def on_train_end(self, logs=None):
         end_date = datetime.today().strftime('%d/%m/%Y %H:%M:%S')
-        messages = [f"Train started finished at {end_date}"]
+        messages = [f"Train finished at {end_date}"]
 
         plot = None
         if self.__show_plot:
@@ -54,7 +62,7 @@ class TelegramCallback(keras.callbacks.Callback):
 
             ax1.plot(logs['categorical_accuracy'])
             ax1.plot(logs['val_categorical_accuracy'])
-            ax1.title('Model accuracy')
+            ax1.title.set_text('Model accuracy')
             ax1.ylabel('accuracy')
             ax1.xlabel('epoch')
             ax1.legend(['train', 'validation'], loc='upper left')
@@ -62,16 +70,13 @@ class TelegramCallback(keras.callbacks.Callback):
             # "Loss"
             ax2.plot(logs['loss'])
             ax2.plot(logs['val_loss'])
-            ax2.title('Model loss')
+            ax2.title.set_text('Model loss')
             ax2.ylabel('loss')
             ax2.xlabel('epoch')
             ax2.legend(['train', 'validation'], loc='upper left')
 
-            # If we haven't already shown or saved the plot, then we need to
-            # draw the figure first...
             fig.canvas.draw()
 
-            # Now we can save it to a numpy array.
             data = np.fromstring(fig.canvas.tostring_rgb(), dtype=np.uint8, sep='')
             data = data.reshape(fig.canvas.get_width_height()[::-1] + (3,))
 
@@ -82,8 +87,9 @@ class TelegramCallback(keras.callbacks.Callback):
 
     def on_epoch_end(self, epoch, logs=None):
         duration = time.time() - self.epoch_time_start
+        duration = round(duration, 2)
 
-        messages = [f"The average loss for epoch {epoch} is {logs['loss']}",
-                    f"The train lasts {duration} seconds"]
+        messages = [f"The average loss for epoch {epoch} is {logs['loss']} \n "
+                    f"the training of the epoch has last {duration} seconds"]
 
         telegram_send.send(messages=messages)
