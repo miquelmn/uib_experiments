@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
-""" Callbacks to send keras results to telegram bot.
+""" Callback to send keras results to telegram bot.
 
+This module defines a keras callback to send status messages through a telegram bot.
 """
 from matplotlib import pyplot as plt
 from datetime import datetime
@@ -15,6 +16,8 @@ class TelegramCallback(keras.callbacks.Callback):
 
     def __init__(self, show_plot=False, *args, **kwargs):
         self.__show_plot = show_plot
+        self.__epoch_time_start = None
+
         super().__init__(*args, **kwargs)
 
     def on_train_begin(self, logs=None):
@@ -63,16 +66,16 @@ class TelegramCallback(keras.callbacks.Callback):
             ax1.plot(logs['categorical_accuracy'])
             ax1.plot(logs['val_categorical_accuracy'])
             ax1.title.set_text('Model accuracy')
-            ax1.ylabel('accuracy')
-            ax1.xlabel('epoch')
+            ax1.set_ylabel('accuracy')
+            ax1.set_xlabel('epoch')
             ax1.legend(['train', 'validation'], loc='upper left')
 
             # "Loss"
             ax2.plot(logs['loss'])
             ax2.plot(logs['val_loss'])
             ax2.title.set_text('Model loss')
-            ax2.ylabel('loss')
-            ax2.xlabel('epoch')
+            ax2.set_ylabel('loss')
+            ax2.set_xlabel('epoch')
             ax2.legend(['train', 'validation'], loc='upper left')
 
             fig.canvas.draw()
@@ -83,10 +86,10 @@ class TelegramCallback(keras.callbacks.Callback):
         return data
 
     def on_epoch_begin(self, batch, logs=None):
-        self.epoch_time_start = time.time()
+        self.__epoch_time_start = time.time()
 
     def on_epoch_end(self, epoch, logs=None):
-        duration = time.time() - self.epoch_time_start
+        duration = time.time() - self.__epoch_time_start
         duration = round(duration, 2)
 
         messages = [f"The average loss for epoch {epoch} is {logs['loss']} \n "
