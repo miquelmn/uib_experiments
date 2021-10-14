@@ -1,3 +1,6 @@
+# -*- coding: utf-8 -*-
+""" Module containing the decorators. """
+
 import os
 import subprocess
 import logging
@@ -7,7 +10,8 @@ import sys
 from . import experiment as exps
 
 
-def experiment(out_path="./out", explanation: str = exps.experiment.DONT_WRITE_TK):
+def experiment(out_path="./out", explanation: str = exps.experiment.DONT_WRITE_TK,
+               notification: bool = False):
     def decorator(func):
         """ Decorator, make a sound after the function is finished
 
@@ -27,25 +31,28 @@ def experiment(out_path="./out", explanation: str = exps.experiment.DONT_WRITE_T
             kwargs["exp"] = exp
             res = func(*args, **kwargs)
 
-            duration = 1  # seconds
-            freq = 440  # Hz
-            if sys.platform.startswith("linux"):
-                os.system('play -nq -t alsa synth {} sine {}'.format(duration, freq))
-                if explanation != exps.experiment.DONT_WRITE_TK:
-                    subprocess.Popen(
-                        ['notify-send',
-                         f"Experiment {exp.get_num_exp()} finished \n{exp.explanation}"])
-            else: # Windows
-                import winsound
-                from win10toast import ToastNotifier
-
-                winsound.Beep(freq, duration * 1000)
-
-                toaster = ToastNotifier()
-                toaster.show_toast("Sample Notification", "Python is awesome!!!")
-
-
             exp.finish()
+
+            if notification:
+                duration = 1  # seconds
+                freq = 440  # Hz
+                if sys.platform.startswith("linux"):
+                    os.system('play -nq -t alsa synth {} sine {}'.format(duration, freq))
+                    if explanation != exps.experiment.DONT_WRITE_TK:
+                        subprocess.Popen(
+                            ['notify-send',
+                             f"Experiment {exp.get_num_exp()} finished \n{exp.explanation}"])
+                elif sys.platform.startswith("win"):  # Windows
+                    import winsound
+                    from win10toast import ToastNotifier
+
+                    winsound.Beep(freq, duration * 1000)
+
+                    toaster = ToastNotifier()
+                    toaster.show_toast(f"Experiment {exp.get_num_exp()}",
+                                       f"Experiment {exp.get_num_exp()} finished, "
+                                       f"last {exp.time} \n"
+                                       f"Results: {exp.results} ")
 
             return res
 

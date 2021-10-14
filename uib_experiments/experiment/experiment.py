@@ -38,7 +38,8 @@ class Experiment:
                        the folder for the last experiment.
     """
 
-    def __init__(self, path: str, logger, num_exp: int = -1, explanation: str = None, arguments=None):
+    def __init__(self, path: str, logger, num_exp: int = -1, explanation: str = None,
+                 arguments=None):
         if num_exp < 0:  # Is not set, we're going to get automatic the number
             exps = list(glob.iglob(os.path.join(path, "exp_*")))
             exps = sorted(exps,
@@ -61,6 +62,7 @@ class Experiment:
         self._explanation = explanation
         self._extra_text = None
         self._arguments = arguments
+        self.__results = None
 
     @property
     def path(self):
@@ -98,6 +100,9 @@ class Experiment:
             with open(path, "w") as text_file:
                 text_file.write(self.__get_resume())
 
+        self._logger.info(
+            f"Experiment {self._num_exp} finished after {self.time}.")
+
     def set_explanation(self, explanation: str):
         """ Sets the explanation of the algorithm
 
@@ -117,8 +122,6 @@ class Experiment:
         Returns:
 
         """
-        self._logger.info(f"Experiment {self._num_exp} has finished.")
-
         resum = "%s \tExperiment %s started" % (
             datetime.datetime.fromtimestamp(self._start_time).strftime("%d/%m/%Y %H:%M:%S"),
             str(self._num_exp))
@@ -132,7 +135,7 @@ class Experiment:
         if self._extra_text is not None:
             resum = resum + "\n\t\t\t %s" % self._extra_text
 
-        resum += "\n\t\t\tElapsed time %s minutes" % (str(self._end_time - self._start_time))
+        resum += f"\n\t\t\tElapsed time {self.time} minutes"
         resum += "\n%s \tExperiment %s finished" % (
             datetime.datetime.fromtimestamp(self._end_time).strftime("%d/%m/%Y %H:%M:%S"),
             str(self._num_exp))
@@ -361,15 +364,17 @@ class Experiment:
 
     @staticmethod
     def _draw_points(img, points, values, side=0):
-        """
-        Draw the value in the points position on the image. The drawing function used
+        """ Draw the value in the points position on the image. The drawing function used
         is a square, the side is the length of the square
 
-        :param img:
-        :param points:
-        :param values:
-        :param side:
-        :return:
+        Args:
+            img:
+            points:
+            values:
+            side:
+
+        Returns:
+
         """
         mask = np.copy(img)
         mask = mask.astype(np.float32)
@@ -384,8 +389,7 @@ class Experiment:
                 mask[point[1], point[0]] = val
             else:
                 mask[int(point[1] - side): int(point[1] + side),
-                int(point[0] - side): int(point[0] +
-                                          side)] = val
+                     int(point[0] - side): int(point[0] +side)] = val
             i = i + 1
 
         return mask
@@ -417,3 +421,20 @@ class Experiment:
         # Apply colormap for each channel individually
         channels = [cv2.LUT(image_gray, color_range[:, i]) for i in range(3)]
         return np.dstack(channels)
+
+    @property
+    def time(self):
+        if self._end_time is not None:
+            elapsed_time = self._end_time - self._start_time
+        else:
+            elapsed_time = -1
+
+        return elapsed_time
+
+    @property
+    def results(self):
+        return self.__results
+
+    @results.setter
+    def results(self, value: str):
+        self.__results = value
