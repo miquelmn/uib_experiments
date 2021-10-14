@@ -27,12 +27,24 @@ def experiment(out_path="./out", explanation: str = exps.experiment.DONT_WRITE_T
             kwargs["exp"] = exp
             res = func(*args, **kwargs)
 
-            duration = 2  # seconds
+            duration = 1  # seconds
             freq = 440  # Hz
-            os.system('play -nq -t alsa synth {} sine {}'.format(duration, freq))
-            if explanation != exps.experiment.DONT_WRITE_TK:
-                subprocess.Popen(
-                    ['notify-send', f"Experiment {exp.get_num_exp()} finished \n{exp.explanation}"])
+            if sys.platform.startswith("linux"):
+                os.system('play -nq -t alsa synth {} sine {}'.format(duration, freq))
+                if explanation != exps.experiment.DONT_WRITE_TK:
+                    subprocess.Popen(
+                        ['notify-send',
+                         f"Experiment {exp.get_num_exp()} finished \n{exp.explanation}"])
+            else: # Windows
+                import winsound
+                from win10toast import ToastNotifier
+
+                winsound.Beep(freq, duration * 1000)
+
+                toaster = ToastNotifier()
+                toaster.show_toast("Sample Notification", "Python is awesome!!!")
+
+
             exp.finish()
 
             return res

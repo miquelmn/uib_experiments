@@ -4,7 +4,7 @@ from setuptools import setup, find_packages
 LONG_DESCRIPTION = "Package to handle scientific experiments easily"
 
 setup(name='uib_experiments',
-      version='0.9.2.1',
+      version='0.9.2.3',
       description='Handle the experiments.',
       long_description=LONG_DESCRIPTION,
       url='https://github.com/miquelmn/uib_experiments',
