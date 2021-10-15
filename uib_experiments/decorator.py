@@ -41,7 +41,7 @@ def experiment(out_path="./out", explanation: str = exps.experiment.DONT_WRITE_T
                     if explanation != exps.experiment.DONT_WRITE_TK:
                         subprocess.Popen(
                             ['notify-send',
-                             f"Experiment {exp.get_num_exp()} finished \n{exp.explanation}"])
+                             f"Experiment {exp.get_num_exp()} finished \n{exp.description}"])
                 elif sys.platform.startswith("win"):  # Windows
                     import winsound
                     from win10toast import ToastNotifier
