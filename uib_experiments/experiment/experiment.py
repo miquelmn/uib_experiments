@@ -11,6 +11,8 @@ import pickle
 import re
 import time
 import datetime
+import warnings
+import json
 
 from collections.abc import Iterable
 
@@ -19,6 +21,7 @@ import numpy as np
 from matplotlib import pyplot as plt
 
 from ..data import dades
+from ..database_model import database
 
 Num = Union[int, float]
 DataExperiment = Union[dades.Data, List[dades.Data]]
@@ -39,7 +42,7 @@ class Experiment:
     """
 
     def __init__(self, path: str, logger, num_exp: int = -1, explanation: str = None,
-                 arguments=None):
+                 params=None, database_name: str = None):
         if num_exp < 0:  # Is not set, we're going to get automatic the number
             exps = list(glob.iglob(os.path.join(path, "exp_*")))
             exps = sorted(exps,
@@ -52,6 +55,7 @@ class Experiment:
 
         self._logger = logger
         self._num_exp = num_exp
+        self.__root_path = path
         self._path = os.path.join(path, "exp_" + str(num_exp))
         self._start_time = 0
         self._end_time = 0
@@ -59,78 +63,172 @@ class Experiment:
         if READ_FROM_KEYBOARD and explanation is None:
             explanation = input("Enter an explanation for the experiment: ")
 
-        self._explanation = explanation
+        self.__description = explanation
         self._extra_text = None
-        self._arguments = arguments
+        self.__params = params
         self.__results = None
+        self.__random_state = np.random.get_state()[1][0]
+
+        if database_name is not None:
+            db = database.ExperimentDB()
+            db.start(os.path.join(path, database_name))
+        else:
+            db = None
+
+        self.__database_name = database_name
+        self.__database = db
+        self.__database_object = None
+
+    @property
+    def db_object(self):
+        return self.__database_object
+
+    @db_object.setter
+    def db_object(self, value: database.Experiment):
+        self.__database_object = value
 
     @property
     def path(self):
         return self._path
 
     @property
-    def explanation(self):
-        return self._explanation
+    def description(self):
+        return self.__description
+
+    @property
+    def time(self):
+        if self.end_time is not None:
+            elapsed_time = self.end_time - self.start_time
+        else:
+            elapsed_time = -1
+
+        return elapsed_time
+
+    @property
+    def results(self) -> dict:
+        return self.__results
+
+    @results.setter
+    def results(self, value: dict):
+        self._logger.info(f"Metrics {value}")
+
+        if self.__database is not None:
+            self.__database.add_metrics(self, value)
+
+        self.__results = value
+
+    @property
+    def start_time(self):
+        return self._start_time
+
+    @property
+    def end_time(self):
+        return self._end_time
+
+    @property
+    def random_state(self):
+        return self.__random_state
+
+    @property
+    def description(self) -> str:
+        return self.__description
+
+    @property
+    def params(self):
+        return self.__params
+
+    @params.setter
+    def params(self, values):
+        self._logger.info(f"Params {values}")
+
+        self.__params = values
 
     def get_num_exp(self) -> int:
         return self._num_exp
 
-    def init(self) -> None:
+    def init(self):
         """ Initializes the experiment.  """
 
-        if self._explanation != DONT_WRITE_TK:
+        if self.__description != DONT_WRITE_TK:
             Experiment._create_folder(self._path)
         self._start_time = time.time()
 
         self._logger.info(f"Experiment {self._num_exp} has started.")
 
-    def finish(self) -> None:
-        """
+    def finish(self, results=None):
+        """ Finishes the experiment.
+
         Raises:
             RuntimeError when the experiment was not started
-        Returns:
-
         """
         if self._start_time == 0:
             raise RuntimeError("ERROR: Trying to finish a non initialized experiment.")
         self._end_time = time.time()
 
         path = os.path.join(self._path, "experiment_resume.txt")
-        if self._explanation != DONT_WRITE_TK:
+        if self.__description != DONT_WRITE_TK:
             with open(path, "w") as text_file:
                 text_file.write(self.__get_resume())
+
+        if self.__database is not None:
+            self.__database.add_experiment(experiment=self, params=self.params, results=results)
+
+        with open(os.path.join(self._path, "experiment.json"), "w") as outfile:
+            json.dump(self.export(), outfile)
 
         self._logger.info(
             f"Experiment {self._num_exp} finished after {self.time}.")
 
-    def set_explanation(self, explanation: str):
-        """ Sets the explanation of the algorithm
+    def add_metrics(self, metrics: dict):
+        """ Add metrics to experiment.
+
+        Add metrics to the experiment. In the case that there is a database object also update it
+        to contain this information.
 
         Args:
-            explanation:
+            metrics (dict): Dictionary containing the metrics in a {metric_name => metric_value}
+        """
+        self._logger.info(f"Metrics {metrics}")
 
-        Returns:
+        if self.__database is not None:
+            self.__database.add_metrics(self, metrics)
+
+    def set_explanation(self, explanation: str):
+        """ Warning: Deprecated
+
+        Sets the description of the algorithm
+
+        Args:
+            explanation (str):
 
         """
-        self._explanation = explanation
+        warnings.warn("Endpoint deprecated, use instead set_description")
+        self.set_description(explanation)
+
+    def set_description(self, description: str):
+        """ Sets the description of the algorithm
+
+        Args:
+            description (str):
+
+        """
+        self.__description = description
 
     def __get_resume(self) -> str:
         """ Resume of the experiment.
 
         Constructs an string with information about the experiment.
 
-        Returns:
-
         """
         resum = "%s \tExperiment %s started" % (
             datetime.datetime.fromtimestamp(self._start_time).strftime("%d/%m/%Y %H:%M:%S"),
             str(self._num_exp))
 
-        if self._explanation is not None:
-            resum += "\n\t\t\t%s" % self._explanation
+        if self.__description is not None:
+            resum += "\n\t\t\t%s" % self.__description
 
-        if self._arguments is not None:
-            resum += "\n\t\t\targs: " + str(self._arguments)
+        if self.__params is not None:
+            resum += "\n\t\t\targs: " + str(self.__params)
 
         if self._extra_text is not None:
             resum = resum + "\n\t\t\t %s" % self._extra_text
@@ -146,12 +244,10 @@ class Experiment:
         """
         
         Args:
-            dada: 
-
-        Returns:
+            dada:
 
         """
-        if self._explanation != DONT_WRITE_TK:
+        if self.__description != DONT_WRITE_TK:
             if isinstance(dada, List):
                 self.__save_results_batch(dada)
             else:
@@ -161,9 +257,7 @@ class Experiment:
         """
         
         Args:
-            dada: 
-
-        Returns:
+            dada:
 
         """
         storage_type = dada.storage_type
@@ -183,8 +277,6 @@ class Experiment:
 
     def __save_object(self, data: dades.Data):
         """ Pickle object
-
-        Returns:
 
         """
         path, name = self._create_folders_for_data(data)
@@ -389,7 +481,7 @@ class Experiment:
                 mask[point[1], point[0]] = val
             else:
                 mask[int(point[1] - side): int(point[1] + side),
-                     int(point[0] - side): int(point[0] +side)] = val
+                int(point[0] - side): int(point[0] + side)] = val
             i = i + 1
 
         return mask
@@ -422,19 +514,48 @@ class Experiment:
         channels = [cv2.LUT(image_gray, color_range[:, i]) for i in range(3)]
         return np.dstack(channels)
 
-    @property
-    def time(self):
-        if self._end_time is not None:
-            elapsed_time = self._end_time - self._start_time
-        else:
-            elapsed_time = -1
+    def export(self) -> dict:
+        """ Exports experiment to a dict.
 
-        return elapsed_time
+        Returns:
+            Experiment info
+        """
+        info = {'path': self.__root_path, 'description': self.__description,
+                'num_exp': self._num_exp, 'random_state': int(self.__random_state),
+                'end_time': self._end_time, 'start_time': self._start_time, 'params': self.params,
+                'database_name': self.__database_name}
 
-    @property
-    def results(self):
-        return self.__results
+        if self.__params is not None:
+            info['params'] = self.__params
 
-    @results.setter
-    def results(self, value: str):
-        self.__results = value
+        if self.__database is not None:
+            info['id_database'] = self.__database_object.exp_id
+
+        return info
+
+    @staticmethod
+    def import_from_json(path: str, logger):
+        """ Import Experiment info from json file.
+
+        Imports the Experiment information previously exported with the respective function.
+
+        Args:
+            path (str): Path to the file containing the info.
+            logger (logger): Python logger object
+
+        Returns:
+            Experiment object with the information found in the file (path).
+        """
+        exp = None
+
+        with open(path, "r") as infile:
+            data = json.load(infile)
+            exp = Experiment(path=data['path'], num_exp=data['num_exp'], params=data['params'],
+                             explanation=data['description'], database_name=data['database_name'],
+                             logger=logger)
+
+            if 'id_database' in data:
+                db_exp = database.Experiment.get(exp_id=data['id_database'])
+                exp.db_object = db_exp
+
+        return exp
