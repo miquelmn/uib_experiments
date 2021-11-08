@@ -69,66 +69,48 @@ class ExperimentDB:
         ExperimentDB.add_metrics(experiment, results)
 
     @staticmethod
-    def add_metrics(experiment: exp, results: Dict, theta: int = None):
-        """ Add the metrics to the database.
-
-        This method adds the metrics to the database. A metric is a tuple with the name and the
-        value. In addition can also have a theta value. This value is the distance used to compute
-        the different metrics.
+    def add_metrics(experiment: exp, results: Dict, theta=None):
+        """ Add the results of an experiment to the database.
 
         Args:
-            experiment: Experiment of whom the metrics are.
-            results: Metrics to add to the database.
-            theta: Integer with the theta value.
+            experiment: Experiment to add the results.
+            results: Dictionary with the results information.
+            theta: Integer with the theta value, the distance threshold to consider a prediction
+                    correct.
 
         """
-        ExperimentDB.__add_elements(results, experiment.db_object.results, Result, theta)
+        for name, value in results.items():
+            res = Result.get_or_none(name=name, value=value, theta=theta)
 
-    @staticmethod
-    def __add_elements(data, table, class_object, theta: int = None):
-        """ Add elements to the database.
+            if res is None:
+                res = Result.create(name=name, value=value, theta=theta)
 
-        Args:
-            data: Dictionary with the data to add to the database
-            table: Table from the peerwee database.
-            class_object: Class of the object to add to the database.
-            theta: (optional) Integer with the theta value. The distance to be used to calculate the
-                    metrics.
-        """
-        for name, value in data.items():
-            if theta is None:
-                element = class_object.get_or_none(name=name, value=value)
-            else:
-                element = class_object.get_or_none(name=name, value=value, theta=theta)
-
-            if element is None and theta is None:
-                class_object.create(name=name, value=value)
-            elif element is None and theta is not None:
-                class_object.create(name=name, value=value, theta=theta)
-
-            if theta is None:
-                query = table.select().where(class_object.name == name,
-                                             class_object.value == value)
-            else:
-                query = table.select().where(class_object.name == name, class_object.theta == theta,
-                                             class_object.value == value)
+            query = experiment.db_object.results.select().where(Result.name == name,
+                                                                Result.value == value,
+                                                                Result.theta == theta)
 
             if not query.exists():
-                table.add(element)
+                experiment.db_object.results.add(res)
 
     @staticmethod
     def add_params(experiment: exp, params: Dict):
-        """ Add parameters to the database.
-
-        Parameters are a tuple with the name and the value of the parameter. We add to the database
-        with this same format.
+        """ Add the parameters of an experiment to the database.
 
         Args:
-            experiment: Experiment of whom the parameters are.
-            params: Dictionary with the parameters to add to the database.
-
+            experiment: Experiment to add the parameters.
+            params: Dictionary with the parameters information.
         """
-        ExperimentDB.__add_elements(params, experiment.db_object.params, Param)
+        for name, value in params.items():
+            param = Param.get_or_none(name=name, value=value)
+
+            if param is None:
+                param = Param.create(name=name, value=value)
+
+            query = experiment.db_object.params.select().where(Param.name == name,
+                                                               Param.value == value)
+
+            if not query.exists():
+                experiment.db_object.params.add(param)
 
     @staticmethod
     def get_experiment(identifier: int):
