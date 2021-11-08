@@ -1,10 +1,11 @@
 # -*- coding: utf-8 -*-
-""" Module containing the decorators. """
+""" Module containing the decorators.
+
+Written by: Miquel Miró Nicolau (UIB)
+"""
 
 import os
 import subprocess
-import logging
-from logging.handlers import TimedRotatingFileHandler
 import sys
 
 from . import experiment as exps

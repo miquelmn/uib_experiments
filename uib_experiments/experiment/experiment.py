@@ -3,6 +3,8 @@
 
 This module contains a set of function and classes to handles experiments. The aim of these methods
 is to be able to save results easily with an standard format.
+
+Written by: Miquel Miró Nicolau
 """
 from typing import Union, Tuple, List
 import os
@@ -32,8 +34,8 @@ DONT_WRITE_TK = "REM"
 class Experiment:
     """ Class to handle different experiment.
 
-    An experiment is defined by a numbe and a path. The number is the way to identify the experiment
-    while the path is the location where the results will be saved.
+    An experiment is defined by a number and a path. The number is the way to identify the
+    experiment while the path is the location where the results will be saved.
 
     Args:
         path (str): Path where the different experiments will be saved.
@@ -179,19 +181,20 @@ class Experiment:
         self._logger.info(
             f"Experiment {self._num_exp} finished after {self.time}.")
 
-    def add_metrics(self, metrics: dict):
+    def add_metrics(self, metrics: dict, theta: int = None):
         """ Add metrics to experiment.
 
         Add metrics to the experiment. In the case that there is a database object also update it
         to contain this information.
 
         Args:
-            metrics (dict): Dictionary containing the metrics in a {metric_name => metric_value}
+            metrics: Dictionary containing the metrics in a {metric_name => metric_value}ç
+            theta: (optional) Integer indicating the theta value of the experiment.
         """
         self._logger.info(f"Metrics {metrics}")
 
         if self.__database is not None:
-            self.__database.add_metrics(self, metrics)
+            self.__database.add_metrics(self, metrics, theta=theta)
 
     def set_explanation(self, explanation: str):
         """ Warning: Deprecated
@@ -199,7 +202,7 @@ class Experiment:
         Sets the description of the algorithm
 
         Args:
-            explanation (str):
+            explanation (str): Explanation of the algorithm.
 
         """
         warnings.warn("Endpoint deprecated, use instead set_description")
@@ -209,7 +212,7 @@ class Experiment:
         """ Sets the description of the algorithm
 
         Args:
-            description (str):
+            description (str): Explanation of the algorithm.
 
         """
         self.__description = description
