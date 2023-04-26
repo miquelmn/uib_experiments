@@ -155,7 +155,7 @@ class Experiment:
             Experiment._create_folder(self._path)
         self._start_time = time.time()
 
-        self._logger.info(f"Experiment {self._num_exp} has started.")
+        self._logger.info(f"Experiment {self._num_exp} has started." + self.__get_extra_info())
 
     def finish(self, results=None):
         """ Finishes the experiment.
@@ -209,13 +209,34 @@ class Experiment:
         self.set_description(explanation)
 
     def set_description(self, description: str):
-        """ Sets the description of the algorithm
+        """ Sets the description of the experiment
 
         Args:
-            description (str): Explanation of the algorithm.
+            description (str): Explanation of the experiment.
 
         """
         self.__description = description
+
+    def __get_extra_info(self) -> str:
+        """ Extra information about the experiment.
+
+        Constructs an string with extra information about the experiment. This information is
+        the description, the parameters and the extra text.
+
+        Returns:
+            str: String with the extra information.
+        """
+        resum = ""
+        if self.__description is not None:
+            resum += f"\n\t\t\t{self.__description}"
+
+        if self.__params is not None:
+            resum += f"\n\t\t\targs: {self.__params}"
+
+        if self._extra_text is not None:
+            resum += f"\n\t\t\t {self._extra_text}"
+
+        return resum
 
     def __get_resume(self) -> str:
         """ Resume of the experiment.
@@ -227,19 +248,13 @@ class Experiment:
             datetime.datetime.fromtimestamp(self._start_time).strftime("%d/%m/%Y %H:%M:%S"),
             str(self._num_exp))
 
-        if self.__description is not None:
-            resum += "\n\t\t\t%s" % self.__description
-
-        if self.__params is not None:
-            resum += "\n\t\t\targs: " + str(self.__params)
-
-        if self._extra_text is not None:
-            resum = resum + "\n\t\t\t %s" % self._extra_text
+        resum += self.__get_resume()
 
         resum += f"\n\t\t\tElapsed time {self.time} minutes"
-        resum += "\n%s \tExperiment %s finished" % (
-            datetime.datetime.fromtimestamp(self._end_time).strftime("%d/%m/%Y %H:%M:%S"),
-            str(self._num_exp))
+
+        date_str = datetime.datetime.fromtimestamp(self._end_time).strftime("%d/%m/%Y %H:%M:%S")
+
+        resum += f"\n{date_str} \tExperiment {self._num_exp} finished"
 
         return resum
 
