@@ -11,7 +11,7 @@ import os
 
 from peewee import *
 
-from uib_experiments.experiment import experiment as exp
+from mmn_experiments.experiment import experiment as exp
 
 DB = SqliteDatabase(None)
 

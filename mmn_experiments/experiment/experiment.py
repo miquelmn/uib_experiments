@@ -248,7 +248,7 @@ class Experiment:
             datetime.datetime.fromtimestamp(self._start_time).strftime("%d/%m/%Y %H:%M:%S"),
             str(self._num_exp))
 
-        resum += self.__get_resume()
+        resum += self.__get_extra_info()
 
         resum += f"\n\t\t\tElapsed time {self.time} minutes"
 
