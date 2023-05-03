@@ -6,7 +6,7 @@ build-backend = "setuptools.build_meta"
 name = "mmn_experiments"
 description = "Library to handle experiment information"
 readme = "README.md"
-version = "1.6.2"
+version = "1.6.3"
 authors = [
     { name = "Miquel Miró Nicolau", email = "miquel.miro@uib.cat"},
     { name = "Gabriel Moyà Alcover", email = "gabriel_moya@uib.es"}
